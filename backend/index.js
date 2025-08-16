@@ -1,12 +1,19 @@
-import express from "express";
-
-const app = express()
-const PORT = 3000
-
-app.get("/", (req, res) => {
-    res.send("welcome to msiConnect")
+import dotenv from "dotenv"
+dotenv.config({
+    path: ".env"
 })
 
-app.listen(PORT, () => {
-    console.log(`server is running on port: ${PORT}`)
-})
+import { dbConnect } from "./src/db/dbConnect.js"
+import { app } from "./app.js"
+
+const PORT = process.env.PORT
+
+dbConnect()
+    .then(
+        app.listen(PORT, () => {
+            console.log('Server is running at port', PORT);
+        })
+    )
+    .catch((error) => {
+        console.log("Database is not connected");
+    })
