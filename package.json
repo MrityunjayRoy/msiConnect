@@ -1,0 +1,7 @@
+{
+    "name": "msiconnect",
+    "scripts": {
+        "server": "cd backend && npm i && npm run dev",
+        "client": "cd frontend/msiconnect && npm i && npm run dev"
+    }
+}
