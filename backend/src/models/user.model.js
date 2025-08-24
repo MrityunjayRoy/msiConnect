@@ -1,9 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt"
-
-// --- Notes ---
-// how year should be handled
-// should i add jwt or not?
+import jwt from "jsonwebtoken"
 
 // User Schema
 const userSchema = new Schema(
@@ -30,10 +27,16 @@ const userSchema = new Schema(
             type: String,
             required: true,
         },
+        refreshToken: {
+            type: String,
+        },
         avatar: {
             type: String,
             required: false
         }
+    },
+    {
+        timestamps: true
     }
 )
 
@@ -52,7 +55,33 @@ userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
-// user model
-const user = mongoose.model("User", userSchema)
+// generate access token
+userSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
 
-export { user }
+// generate refresh token
+userSchema.methods.generateRefreshToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
+
+// user model
+const User = mongoose.model("User", userSchema)
+
+export { User }
