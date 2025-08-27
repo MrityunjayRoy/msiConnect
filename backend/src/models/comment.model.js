@@ -2,11 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const commentSchema = new Schema(
     {
-        commentID: {
-            type: String,
-            required: true,
-            unique: true,
-        },
         userID: {
             type: Schema.Types.ObjectId,
             ref: "User",
