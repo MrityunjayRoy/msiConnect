@@ -137,8 +137,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const getUser = asyncHandler(async (req, res) => {
+    const user = await User.find({ enrollID: req.params.enrollID }).select("-password -refreshToken")
+    if (!user) {
+        throw new APIError(400, "User doesn't exists")
+    }
     return res.status(200).json(
-        new APIResponse(200, "User found successfully", req.user)
+        new APIResponse(200, "User found successfully", user)
     )
 })
 
