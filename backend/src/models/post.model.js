@@ -2,38 +2,32 @@ import mongoose, { Schema } from "mongoose";
 
 const postSchema = new Schema(
     {
-        postTitle: {
+        postBody: {
             type: String,
             required: true,
         },
-        postDesc: {
-            type: String,
-            required: true,
-        },
-        userId: {
+        user: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        course: {
+        image: {
             type: String,
-            required: true,
-        },
-        tag: {
-            type: [String],
-            default: [],
+            default: []
         },
         likes: {
             type: [Schema.Types.ObjectId],
             ref: "User",
             default: [],
         },
-        comments: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: "Comment",
-            },
-        ],
+        parent: {
+            type: Schema.Types.ObjectId,
+            ref: "Post",
+            default: null,
+        },
+        editedAt: {
+            type: Date,
+        },
     },
     {
         timestamps: true,

@@ -5,34 +5,66 @@ import jwt from "jsonwebtoken"
 // User Schema
 const userSchema = new Schema(
     {
-        enrollID: {
-            type: Number,
-            required: true,
-            unique: true,
-        },
         fullname: {
             type: String,
-            required: true,
+            default: function () {
+                return this.username
+            }
         },
-        year: {
-            type: Number,
-            required: true
-        },
-        course: {
+        username: {
             type: String,
             required: true,
-            enum: ['BCA']
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
+            lowercase: true,
+            validate: {
+                validator: function (value) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                    return emailRegex.test(value)
+                },
+                message: "Invalid Email format!",
+            },
         },
         password: {
             type: String,
             required: true,
-        },
-        refreshToken: {
-            type: String,
+            minLength: [8, "Password must be 8 chars long"],
+            select: false,
         },
         avatar: {
             type: String,
             required: false
+        },
+        bio: {
+            type: String,
+            default: "real",
+        },
+        followers: {
+            type: [Schema.Types.ObjectId],
+            ref: "User",
+            default: [],
+        },
+        followings: {
+            type: [Schema.Types.ObjectId],
+            ref: "User",
+            default: [],
+        },
+        likedPosts: {
+            type: [Schema.Types.ObjectId],
+            ref: "Post",
+            default: [],
+        },
+        savedPosts: {
+            type: [Schema.Types.ObjectId],
+            ref: "Post",
+            default: [],
         }
     },
     {

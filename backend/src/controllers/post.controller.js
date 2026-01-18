@@ -4,22 +4,30 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { Comment } from "../models/comment.model.js";
+import { uploadOnCLoudinary } from "../utils/cloudinary.js";
 
 // create a post
 export const createPost = asyncHandler(async (req, res) => {
     console.log("creatin post...");
     const userId = req.user?._id;
     const course = req.user?.course || "";
-    const { title, content, tag } = req.body;
+    const { title, content, tag, images } = req.body;
+
+    const postImagesLocal = req.files?.images[0]?.path;
+
+    const postImages = await uploadOnCLoudinary(postImagesLocal)
+
     if (!userId) {
         throw new APIError(401, "User not authenticated");
     }
+
     const post = await Post.create({
         postTitle: title,
         postDesc: content,
         userId: userId,
         course,
         tag: tag || [],
+        images: postImages?.url,
         comments: [],
     });
     return res.status(200).json(new APIResponse(200, "Post created successfully", post));
