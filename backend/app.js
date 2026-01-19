@@ -1,9 +1,7 @@
 import express from "express";
 import { userRouter } from "./src/routes/user.route.js";
 import { postRouter } from "./src/routes/post.route.js";
-import { commentRouter } from "./src/routes/comment.route.js";
 import cookieParser from "cookie-parser";
-import cors from "cors"
 
 const app = express();
 
@@ -19,6 +17,5 @@ app.get("/real", (req, res) => {
 // base routes
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/post", postRouter);
-app.use("/api/v1/comment", commentRouter);
 
 export { app };

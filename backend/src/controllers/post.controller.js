@@ -3,7 +3,6 @@ import { APIError } from "../utils/APIError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
-import { Comment } from "../models/comment.model.js";
 import { uploadOnCLoudinary } from "../utils/cloudinary.js";
 
 // create a post

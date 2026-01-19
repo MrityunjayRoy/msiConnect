@@ -1,15 +1,15 @@
 import { Router } from "express"
-import { getUser, userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
+import { getCurrentUser, loginUser, userLogout, registerUser } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.route("/register").post(
-    userRegister
+    registerUser
 )
 
 router.route("/login").post(
-    userLogin
+    loginUser
 )
 
 router.route("/logout").get(
@@ -17,9 +17,9 @@ router.route("/logout").get(
     userLogout
 )
 
-router.route("/:enrollID").get(
+router.route("/me").get(
     verifyJWT,
-    getUser
+    getCurrentUser
 )
 
-export {router as userRouter}
+export { router as userRouter }
