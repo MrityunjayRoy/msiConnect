@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import { APIResponse } from "../utils/APIResponse.js";
 import { APIError } from "../utils/APIError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCLoudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshToken = async (userID) => {
     try {
@@ -19,43 +20,61 @@ const generateAccessAndRefreshToken = async (userID) => {
     }
 }
 
-const userRegister = asyncHandler(async (req, res) => {
-    const { enrollID, fullname, year, course, password } = req.body
-    const existingUser = await User.findOne({ enrollID })
+const registerUser = asyncHandler(async (req, res) => {
+    const { fullname, username, email, password, bio } = req.body
+
+    if ([email, username, password].some((field) => field.trim() === "")) {
+        throw new APIError(400, "All field are required")
+    }
+
+    const existingUser = await User.findOne({
+        $or: [{ username, email }]
+    })
 
     if (existingUser) {
         throw new APIError(400, "User already exists")
     }
 
+    const avatarLocal = req.files?.avatar[0]?.path
+    if (!avatarLocal) {
+        throw new APIError(400, "Avatar is required")
+    }
+
+    const avatar = await uploadOnCLoudinary(avatarLocal)
+
     const user = await User.create({
-        enrollID,
-        fullname,
-        year,
-        course,
-        password
+        username: username,
+        email: email,
+        password: password,
+        bio: bio,
+        avatar: avatar
     })
 
-    if (!user) {
+    const createdUser = await User.findById(user._id).select(
+        "-password"
+    )
+
+    if (!createdUser) {
         throw new APIError(400, "Error registering user")
     }
 
     return res.status(200).json(
-        new APIResponse(300, "user created succesfully", user)
+        new APIResponse(200, "user created succesfully", createdUser)
     )
 })
 
-const userLogin = asyncHandler(async (req, res) => {
-    const { enrollID, password } = req.body
+const loginUser = asyncHandler(async (req, res) => {
+    const { username, password } = req.body
 
-    if (!enrollID) {
-        throw new APIError(401, "EnrollNo is required!!")
+    if (!username) {
+        throw new APIError(401, "Username is required!!")
     }
 
     if (!password) {
         throw new APIError(401, "Password is required")
     }
 
-    const user = await User.findOne({ enrollID })
+    const user = await User.findOne({ username }).select("+password")
     if (!user) {
         throw new APIError(401, "User is not registered")
     }
@@ -82,12 +101,6 @@ const userLogin = asyncHandler(async (req, res) => {
 })
 
 const userLogout = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(req.user._id, {
-        $set: {
-            refreshToken: undefined
-        }
-    })
-
     const options = {
         httpOnly: true,
     }
@@ -136,8 +149,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
 })
 
-const getUser = asyncHandler(async (req, res) => {
-    const user = await User.find({ enrollID: req.params.enrollID }).select("-password -refreshToken")
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const id = req.user._id
+    const user = await User.findById(id).select("-password")
     if (!user) {
         throw new APIError(400, "User doesn't exists")
     }
@@ -147,8 +161,8 @@ const getUser = asyncHandler(async (req, res) => {
 })
 
 export {
-    userRegister,
-    userLogin,
+    registerUser,
+    loginUser,
     userLogout,
-    getUser
+    getCurrentUser
 }

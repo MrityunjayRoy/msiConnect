@@ -68,18 +68,18 @@ const userSchema = new Schema(
         }
     },
     {
-        timestamps: true
+        timestamps: true,
+        collection: "user-data"
     }
 )
 
 // bcrypt to hash the password before saving it in the database
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
-        return next()
+        return
     }
 
     this.password = await bcrypt.hash(this.password, 10)
-    next()
 })
 
 // methods to compare with encyrpted password

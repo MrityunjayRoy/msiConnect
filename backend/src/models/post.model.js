@@ -31,6 +31,7 @@ const postSchema = new Schema(
     },
     {
         timestamps: true,
+        collection: "post-data"
     }
 );
 
