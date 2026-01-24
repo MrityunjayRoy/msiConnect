@@ -21,7 +21,7 @@ const generateAccessAndRefreshToken = async (userID) => {
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullname, username, email, password, bio } = req.body
+    const { username, email, password, bio, fullname } = req.body
 
     if ([email, username, password].some((field) => field.trim() === "")) {
         throw new APIError(400, "All field are required")
@@ -35,19 +35,20 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(400, "User already exists")
     }
 
-    const avatarLocal = req.files?.avatar[0]?.path
+    const avatarLocal = req.files?.avatar[0]?.path;
     if (!avatarLocal) {
         throw new APIError(400, "Avatar is required")
     }
 
-    const avatar = await uploadOnCLoudinary(avatarLocal)
+    const avatarUploaded = await uploadOnCLoudinary(avatarLocal)
 
     const user = await User.create({
         username: username,
+        fullname: fullname || username,
         email: email,
         password: password,
         bio: bio,
-        avatar: avatar
+        avatar: avatarUploaded?.url || undefined
     })
 
     const createdUser = await User.findById(user._id).select(
@@ -91,12 +92,13 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
     }
 
+    const loggedUser = await User.findById(user._id)
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
-            new APIResponse(200, "User logged in successfuly", user)
+            new APIResponse(200, "User logged in successfuly", loggedUser)
         )
 })
 
@@ -150,8 +152,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    const id = req.user._id
-    const user = await User.findById(id).select("-password")
+    const user = req.user
     if (!user) {
         throw new APIError(400, "User doesn't exists")
     }
@@ -160,9 +161,69 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params
+    const user = await User.findOne({ username }).select("-password")
+    if (!user) {
+        throw new APIError(404, "User doesn't exists")
+    }
+
+    return res.status(201).json(
+        new APIResponse(201, "Found the user successfully", user)
+    )
+})
+
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const { fullname, username, oldPassword, newPassword, bio } = req.body
+
+    const userid = req.user._id
+
+    const user = await User.findById(userid)
+
+    if (!user) {
+        throw new APIError(204, "User not found")
+    }
+
+    const isUsernameTaken = await User.findOne({
+        username,
+        _id: { $ne: userid }
+    })
+
+    if (isUsernameTaken) {
+        throw new APIError(404, "Username is already taken")
+    }
+
+    // upadate password logic
+    if (oldPassword && newPassword) {
+        if (oldPassword === newPassword) {
+            throw new APIError(404, "New password and old password cannot be the same")
+        }
+
+        if (!user.isPasswordCorrect(oldPassword)) {
+            throw new APIError("404", "The old password is incorrect!")
+        }
+
+        await user.save()
+        return res.status(202).json(
+            new APIResponse(202, "password has been updated successfully")
+        )
+    }
+
+    user.fullname = fullname || user.fullname
+    user.username = username || user.username
+    user.bio = bio || user.bio
+
+    await user.save()
+    return res.status(202).json(
+        new APIResponse(202, "User profile has been updated")
+    )
+})
+
 export {
     registerUser,
     loginUser,
     userLogout,
-    getCurrentUser
+    getCurrentUser,
+    getUserProfile,
+    updateUserProfile
 }

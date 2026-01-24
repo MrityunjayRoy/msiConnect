@@ -12,15 +12,15 @@ const uploadOnCLoudinary = async (localFile) => {
         if (!localFile) return null;
 
         // uploading to cloudinary
-        const response = await cloudinary.uploader.upload(localFile, {
-            public_id: "posts",
-        });
+        const response = await cloudinary.uploader.upload(
+            localFile, { folder: "msiconnect/images", }
+        );
 
         fs.unlinkSync(localFile);
         return response;
     } catch (error) {
-        fs.unlink(localFile);
-        console.log("Error uploaing file to cloudinary", error);
+        fs.unlinkSync(localFile);
+        console.log(`Error uploaing file to cloudinary ${process.env.CLOUDINARY_API_KEY}`, error);
         return null;
     }
 };
