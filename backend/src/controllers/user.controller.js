@@ -35,20 +35,12 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(400, "User already exists")
     }
 
-    const avatarLocal = req.files?.avatar[0]?.path;
-    if (!avatarLocal) {
-        throw new APIError(400, "Avatar is required")
-    }
-
-    const avatarUploaded = await uploadOnCLoudinary(avatarLocal)
-
     const user = await User.create({
         username: username,
         fullname: fullname || username,
         email: email,
         password: password,
         bio: bio,
-        avatar: avatarUploaded?.url || undefined
     })
 
     const createdUser = await User.findById(user._id).select(
