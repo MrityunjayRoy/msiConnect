@@ -211,6 +211,67 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     )
 })
 
+const followUnfollowUser = asyncHandler(async (req, res) => {
+    const currUserId = req.user._id
+    const userToRelateId = req.params
+
+    const userToRelate = await User.findById(userToRelateId)
+    const currUser = await User.findById(currUserId)
+
+    if (!currUser || !userToRelate) {
+        throw new APIError(404, "User not found",)
+    }
+
+    if (id == req.user._id) {
+        throw new APIError(404, "You cannot follow/unfollow yourself")
+    }
+
+    const isFollowing = currUser.followings.includes(userToRelateId)
+    if (isFollowing) {
+        await User.findByIdAndUpdate(currUser, { $pull: { followings: userToRelateId } })
+        await User.findByIdAndUpdate(userToRelateId, { $pull: { followers: currUserId } })
+
+        return res.status().json(
+            new APIResponse(200, "User has been unfollowed successfully")
+        )
+    } else {
+        await User.findByIdAndUpdate(currUser, { $push: { followings: userToRelateId } })
+        await User.findByIdAndUpdate(userToRelateId, { $push: { followers: currUserId } })
+
+        return res.status().json(
+            new APIResponse(200, "User has been followed successfully")
+        )
+    }
+})
+
+const getFollowers = asyncHandler(async (req, res) => {
+    const user = await User.findOne({ username: req.params.username })
+    if (!user) {
+        throw new APIError(404, "User not found!")
+    }
+
+    const followersData = await User.find({ _id: { $in: user.followers }, })
+        .select("-password")
+
+    return res.status().json(
+        new APIResponse(200, "Followers retireved successfully!", followersData)
+    )
+})
+
+const getFollowerings = asyncHandler(async (req, res) => {
+    const user = await User.findOne({ username: req.params.username })
+    if (!user) {
+        throw new APIError(404, "User not found!")
+    }
+
+    const followingData = await User.find({ _id: { $in: user.followings }, })
+        .select("-password")
+
+    return res.status().json(
+        new APIResponse(200, "Followings retireved successfully!", followingData)
+    )
+})
+
 export {
     registerUser,
     loginUser,
