@@ -1,21 +1,21 @@
 import { Router } from "express"
-import { getCurrentUser, loginUser, userLogout, registerUser, getUserProfile, updateUserProfile } from "../controllers/user.controller.js";
+import {
+    getCurrentUser,
+    loginUser,
+    userLogout,
+    registerUser,
+    getUserProfile,
+    updateUserProfile,
+    getAllUsers,
+    followUnfollowUser,
+    getFollowerings,
+    getFollowers
+} from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
 router.route("/register").post(
-    upload.fields([
-        {
-            name: "avatar",
-            maxCount: 1
-        },
-        {
-            name: "coverImage",
-            maxCount: 1
-        }
-    ]),
     registerUser
 )
 
@@ -26,6 +26,10 @@ router.route("/login").post(
 router.route("/logout").get(
     verifyJWT,
     userLogout
+)
+
+router.route("/all").get(
+    getAllUsers
 )
 
 router.route("/me").get(
@@ -40,6 +44,21 @@ router.route("/:username").get(
 router.route("/update-profile").patch(
     verifyJWT,
     updateUserProfile
+)
+
+router.route("/follow/:userToRelateId").post(
+    verifyJWT,
+    followUnfollowUser
+)
+
+router.route("/:username/followings").get(
+    verifyJWT,
+    getFollowerings
+)
+
+router.route("/:username/followers").get(
+    verifyJWT,
+    getFollowers
 )
 
 export { router as userRouter }

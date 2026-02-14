@@ -143,6 +143,18 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
 })
 
+const getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.find().select("-password").lean()
+
+    if (!users || users.length === 0) {
+        throw new APIError(404, "No users found")
+    }
+
+    return res.status(200).json(
+        new APIResponse(201, "All user fetched successfully", users)
+    )
+})
+
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = req.user
     if (!user) {
@@ -213,16 +225,16 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
 const followUnfollowUser = asyncHandler(async (req, res) => {
     const currUserId = req.user._id
-    const userToRelateId = req.params
+    const { userToRelateId } = req.params
 
     const userToRelate = await User.findById(userToRelateId)
     const currUser = await User.findById(currUserId)
 
     if (!currUser || !userToRelate) {
-        throw new APIError(404, "User not found",)
+        throw new APIError(404, `${userToRelateId} not found`,)
     }
 
-    if (id == req.user._id) {
+    if (userToRelateId == req.user._id.toString()) {
         throw new APIError(404, "You cannot follow/unfollow yourself")
     }
 
@@ -231,14 +243,14 @@ const followUnfollowUser = asyncHandler(async (req, res) => {
         await User.findByIdAndUpdate(currUser, { $pull: { followings: userToRelateId } })
         await User.findByIdAndUpdate(userToRelateId, { $pull: { followers: currUserId } })
 
-        return res.status().json(
+        return res.status(200).json(
             new APIResponse(200, "User has been unfollowed successfully")
         )
     } else {
         await User.findByIdAndUpdate(currUser, { $push: { followings: userToRelateId } })
         await User.findByIdAndUpdate(userToRelateId, { $push: { followers: currUserId } })
 
-        return res.status().json(
+        return res.status(200).json(
             new APIResponse(200, "User has been followed successfully")
         )
     }
@@ -253,7 +265,7 @@ const getFollowers = asyncHandler(async (req, res) => {
     const followersData = await User.find({ _id: { $in: user.followers }, })
         .select("-password")
 
-    return res.status().json(
+    return res.status(200).json(
         new APIResponse(200, "Followers retireved successfully!", followersData)
     )
 })
@@ -267,7 +279,7 @@ const getFollowerings = asyncHandler(async (req, res) => {
     const followingData = await User.find({ _id: { $in: user.followings }, })
         .select("-password")
 
-    return res.status().json(
+    return res.status(200).json(
         new APIResponse(200, "Followings retireved successfully!", followingData)
     )
 })
@@ -276,7 +288,11 @@ export {
     registerUser,
     loginUser,
     userLogout,
+    getAllUsers,
     getCurrentUser,
     getUserProfile,
-    updateUserProfile
+    updateUserProfile,
+    followUnfollowUser,
+    getFollowers,
+    getFollowerings
 }
